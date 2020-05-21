@@ -1,6 +1,5 @@
 from tensorflow.keras import backend as K
 from tensorflow.keras import Model
-# from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2, preprocess_input
 from tensorflow.keras.applications.inception_v3 import InceptionV3, preprocess_input
 
 from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping, LearningRateScheduler
@@ -20,6 +19,9 @@ import tensorflow as tf
 
 # Fix progress bar
 from tqdm.keras import TqdmCallback
+
+# Imbalance weights
+from sklearn.utils.class_weight import compute_sample_weight
 
 from utils import Params
 
@@ -144,7 +146,7 @@ def make_square_image(img):
 
 def data_generator(lines, age_portion, ethics,  img_shape, aug=None, bs=1):
     data_list = list()
-    for line in lines:
+    for line in lines[1:]:
         data_list.append(line.rstrip())
 
     n_batches = int(len(data_list) / bs)
@@ -188,7 +190,13 @@ def data_generator(lines, age_portion, ethics,  img_shape, aug=None, bs=1):
             ages = to_categorical(age_batch, num_classes=len(age_portion))
             genders = to_categorical(gender_batch, num_classes=2)
             races = to_categorical(race_batch, num_classes=len(ethics))
-            yield images, [genders, ages, races]
+
+            # Calculate sample weights
+            age_weights = compute_sample_weight(class_weight='balanced',y=ages)
+            gender_weights = compute_sample_weight(class_weight='balanced', y=genders)
+            race_weight = compute_sample_weight(class_weight='balanced', y=races)
+
+            yield images, [genders, ages, races], [age_weights, gender_weights, race_weight]
 
 
 if __name__ == '__main__':
@@ -210,12 +218,11 @@ if __name__ == '__main__':
     val_generator = data_generator(val_list, params.age_portion, params.ethics, image_shape, None, bs=params.batch_size)
 
     model = build_model(params.ethics, params.age_portion, image_shape)
-    model.load_weights('./weights/weights.h5')
     model.fit(train_generator, steps_per_epoch=len(train_list)//params.batch_size,
                     validation_data=val_generator,
                     validation_steps=len(val_list)//params.batch_size,
-                    epochs=1000,
+                    epochs=100,
                     verbose=0,
                     callbacks=get_callbacks())
 
-    model.save_weights('./weights/weights.h5')
+    model.save('./weights/weights_balance.h5')

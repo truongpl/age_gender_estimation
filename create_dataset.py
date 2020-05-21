@@ -83,12 +83,14 @@ if __name__ == '__main__':
     val_dir = params.val_dir
 
     # Create annotation file
-    # print('Create train file')
-    # train_file = open('train_utk.csv','w')
-    # create_annotate(train_dir, './data/train_utk/', train_file)
-    # train_file.close()
+    print('Create train file')
+    train_file = open('train_utk.csv','w')
+    train_file.write('image,age,gender,ethic\n')
+    create_annotate(train_dir, './data/train_utk/', train_file)
+    train_file.close()
 
     print('Create val file')
     val_file = open('val_utk.csv','w')
+    val_file.write('image,age,gender,ethic\n')
     create_annotate(val_dir, './data/val_utk/', val_file)
     val_file.close()
