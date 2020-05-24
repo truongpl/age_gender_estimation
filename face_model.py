@@ -72,38 +72,41 @@ def build_model(ethics, ages, img_shape):
     #     layer.trainable = False
 
     head1 = GlobalAveragePooling2D()(out_backbone)
-    head1 = Flatten()(head1)
+    head1 = Dense(16, activation='relu')(head1)
     out1 = Dense(2, activation='softmax')(head1)
 
     head2 = GlobalAveragePooling2D()(out_backbone)
-    head2 = Dense(64, activation='relu')(head2)
-    head2 = Dropout(0.2)(head2)
+    head2 = Dense(32, activation='relu')(head2)
+    head2 = Dropout(0.1)(head2)
     out2 = Dense(len(ages), activation='softmax')(head2)
 
     head3 = GlobalAveragePooling2D()(out_backbone)
-    head3 = Dense(64, activation='relu')(head3)
-    head3 = Dropout(0.2)(head3)
+    head3 = Dense(32, activation='relu')(head3)
+    head3 = Dropout(0.1)(head3)
     out3 = Dense(len(ethics), activation='softmax')(head3)
 
     age_loss = "categorical_crossentropy"
     gender_loss = "categorical_crossentropy"
     race_loss = "categorical_crossentropy"
 
+    # Dense = gender, dense 2 = age, dense 4 = race
+    loss_weights = {"dense_1": 0.5, "dense_3": 2.5, "dense_5":1}
+
     model = Model(backbone.input, [out1, out2, out3])
     model.summary()
 
     opt = Adam(learning_rate=0.001, beta_1=0.9, beta_2=0.999)
-    model.compile(loss = [gender_loss, age_loss, race_loss], optimizer=opt, metrics=["accuracy"])
+    model.compile(loss = [gender_loss, age_loss, race_loss], loss_weights=loss_weights, optimizer=opt, metrics=["accuracy"])
 
     return model
 
 
 def get_callbacks():
-    filepath1 ="./weights/weights-race-{epoch:02d}-{val_dense_4_accuracy:.2f}.h5"
-    checkpoint1 = ModelCheckpoint(filepath1, monitor='val_dense_4_accuracy', verbose=1, mode='auto', save_best_only=True)
+    filepath1 ="./weights/weights-race-{epoch:02d}-{val_dense_5_accuracy:.2f}.h5"
+    checkpoint1 = ModelCheckpoint(filepath1, monitor='val_dense_5_accuracy', verbose=1, mode='auto', save_best_only=True)
 
-    filepath2 ="./weights/weights-age-{epoch:02d}-{val_dense_2_accuracy:.2f}.h5"
-    checkpoint2 = ModelCheckpoint(filepath2, monitor='val_dense_2_accuracy', verbose=1, mode='auto', save_best_only=True)
+    filepath2 ="./weights/weights-age-{epoch:02d}-{val_dense_3_accuracy:.2f}.h5"
+    checkpoint2 = ModelCheckpoint(filepath2, monitor='val_dense_3_accuracy', verbose=1, mode='auto', save_best_only=True)
 
     def lr_scheduler(epoch, lr):
         decay_rate = 0.1
@@ -116,7 +119,7 @@ def get_callbacks():
 
     es = EarlyStopping(monitor='val_loss', patience=40, verbose=1, min_delta=1e-2)
 
-    callbacks_list = [checkpoint2,  scheduler]
+    callbacks_list = [checkpoint2,  scheduler, TqdmCallback()]
 
     return callbacks_list
 
@@ -206,11 +209,11 @@ if __name__ == '__main__':
 
     aug = get_aug()
 
-    f = open('./train_utk.csv','r')
+    f = open('./data/train_utk.csv','r')
     train_list = f.readlines()
     f.close()
 
-    f = open('./val_utk.csv','r')
+    f = open('./data/val_utk.csv','r')
     val_list = f.readlines()
     f.close()
 
@@ -218,11 +221,12 @@ if __name__ == '__main__':
     val_generator = data_generator(val_list, params.age_portion, params.ethics, image_shape, None, bs=params.batch_size)
 
     model = build_model(params.ethics, params.age_portion, image_shape)
+    model.load_weights('./weights/weights-age-08-0.40.h5')
     model.fit(train_generator, steps_per_epoch=len(train_list)//params.batch_size,
                     validation_data=val_generator,
                     validation_steps=len(val_list)//params.batch_size,
-                    epochs=100,
-                    verbose=0,
+                    epochs=50,
+                    verbose=2,
                     callbacks=get_callbacks())
 
     model.save('./weights/weights_balance.h5')
