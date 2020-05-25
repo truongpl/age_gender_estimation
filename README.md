@@ -41,14 +41,14 @@ After 100 epochs, accuracy in val set is [92% for gender, 80% for race, 42% for 
 python predict.py --model_weights [weights]
 ```
 
-GT: Female - Black - [19-25]
+GT: Female - Black - [19-25]\
 Pred: Female - Black - [19-25]
-![example image 0](./sample_imgs/female_black_24.jpg)
+![example image 0](./sample_img/female_black_24.jpg)
 
-GT: Female - White - [61-70]
+GT: Female - White - [61-70]\
 Pred: Female - White - [61-70]
-![example image 1](./sample_imgs/female_white_67.jpg)
+![example image 1](./sample_img/female_white_67.jpg)
 
-GT: Male - Asian - [19-25]
+GT: Male - Asian - [19-25]\
 Pred: Male - Asian - [26-32]
-![example image 1](./sample_imgs/male_asian_24.jpg)
+![example image 1](./sample_img/male_asian_24.jpg)
