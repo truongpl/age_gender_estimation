@@ -90,7 +90,7 @@ def build_model(ethics, ages, img_shape):
     race_loss = "categorical_crossentropy"
 
     # Dense = gender, dense 2 = age, dense 4 = race
-    loss_weights = {"dense_1": 0.5, "dense_3": 2.5, "dense_5":1}
+    loss_weights = {"dense_1": 1, "dense_3": 2, "dense_5":1}
 
     model = Model(backbone.input, [out1, out2, out3])
     model.summary()
@@ -119,7 +119,7 @@ def get_callbacks():
 
     es = EarlyStopping(monitor='val_loss', patience=40, verbose=1, min_delta=1e-2)
 
-    callbacks_list = [checkpoint2,  scheduler, TqdmCallback()]
+    callbacks_list = [checkpoint1, checkpoint2,  scheduler, TqdmCallback()]
 
     return callbacks_list
 
@@ -221,7 +221,7 @@ if __name__ == '__main__':
     val_generator = data_generator(val_list, params.age_portion, params.ethics, image_shape, None, bs=params.batch_size)
 
     model = build_model(params.ethics, params.age_portion, image_shape)
-    model.load_weights('./weights/weights-age-08-0.40.h5')
+    model.load_weights('./weights/weights-age-17-0.41.h5')
     model.fit(train_generator, steps_per_epoch=len(train_list)//params.batch_size,
                     validation_data=val_generator,
                     validation_steps=len(val_list)//params.batch_size,

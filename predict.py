@@ -31,7 +31,7 @@ from utils import isotropically_resize_image, make_square_image, Params
 
 def convert_age(age, age_portion):
     portion = age_portion[age]
-    result = portion[1]
+    result = (portion[0], portion[1])
     return result
 
 def face_detection(face_detector, image):
@@ -96,15 +96,6 @@ def predict_multitask(model, face_list, img_shape, genders, age_portion, ethics)
         e = ethics[np.argmax(pred[2])]
 
         result.append((g,a,e))
-        # pil_im = Image.fromarray(write_img)
-        # draw = ImageDraw.Draw(pil_im)
-        # font = ImageFont.truetype("./arial.ttf", 10)
-
-        # draw.text((0, 0), text, font=font, fill=(255,0,255,0))
-        # # draw.text((0,20), gt, font=font, fill=(255,0,255,0))
-        # # Save the image
-        # cv2_im_processed = cv2.cvtColor(np.array(pil_im), cv2.COLOR_RGB2BGR)
-        # cv2.imwrite(str(i)+'.jpg', cv2_im_processed)
 
     return result
 
